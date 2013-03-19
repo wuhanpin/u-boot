@@ -1776,6 +1776,15 @@ static void flash_read_jedec_ids (flash_info_t * info)
 	}
 }
 
+ulong board_flash_get_legacy(ulong base, int banknum, flash_info_t *info)
+{
+    info->portwidth = FLASH_CFI_16BIT;
+    info->chipwidth = FLASH_CFI_BY16;
+    info->interface = FLASH_CFI_X16;
+    return 1;
+}
+
+
 /*-----------------------------------------------------------------------
  * Call board code to request info about non-CFI flash.
  * board_flash_get_legacy needs to fill in at least:
