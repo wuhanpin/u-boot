@@ -37,6 +37,7 @@
 
 #define CONFIG_SYS_TEXT_BASE 0x0
 #define CONFIG_S3C2440_GPIO
+#define DEBUG 1
 
 /*
  * High Level Configuration Options
@@ -165,6 +166,9 @@
 /* 512 * 4096 sectors, or 32 * 64k blocks */
 #define CONFIG_SYS_MAX_FLASH_SECT	512
 #define CONFIG_FLASH_SHOW_PROGRESS  1
+
+#define CONFIG_FLASH_CFI_LEGACY
+#define CONFIG_SYS_FLASH_LEGACY_1024Kx16
 
 /*
  * Config for NOR flash

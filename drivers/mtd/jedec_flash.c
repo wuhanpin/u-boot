@@ -181,6 +181,26 @@ struct amd_flash_info {
 #define SIZE_8MiB   23
 
 static const struct amd_flash_info jedec_table[] = {
+#ifdef CONFIG_SYS_FLASH_LEGACY_1024Kx16  
+    {  
+        .mfr_id     = (u16)SST_MANUFACT,  
+        .dev_id     = SST39VF1601,  
+        .name       = "SST 39LV1601",  
+        .uaddr      = {  
+            [1] = MTD_UADDR_0x5555_0x2AAA /* x16 */  
+        },  
+        .DevSize    = SIZE_2MiB,  
+        .CmdSet     = P_ID_AMD_STD,  
+        .NumEraseRegions= 4,  
+        .regions    = {  
+            ERASEINFO(0x10000,6),  /* 6  blocks */  
+            ERASEINFO(0x10000,10), /* 10 blocks */  
+            ERASEINFO(0x10000,15), /* 15 blocks */  
+            ERASEINFO(0x10000,1),  /* 1  blocks */  
+        }  
+    },  
+#endif  
+
 #ifdef CONFIG_SYS_FLASH_LEGACY_256Kx8
 	{
 		.mfr_id		= (u16)SST_MANUFACT,
