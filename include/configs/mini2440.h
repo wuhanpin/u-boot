@@ -53,7 +53,7 @@
 /*
  * We don't use lowlevel_init
  */
-#define CONFIG_SKIP_LOWLEVEL_INIT
+//#define CONFIG_SKIP_LOWLEVEL_INIT
 #define CONFIG_BOARD_EARLY_INIT_F
 
 /*
@@ -170,6 +170,57 @@
 #define CONFIG_FLASH_CFI_LEGACY
 #define CONFIG_SYS_FLASH_LEGACY_1024Kx16
 
+/* Config for nand flash
+
+ 通用配置
+CONFIG_CMD_NAND 	开启NAND FLASH支持主要就是支持相关的操作命令，这个可以说是总开关（默认已经包含在config_cmd_default.h中）。
+CONFIG_MTD_DEVICE	在使用MTD驱动的规范的时候必须要定义这个宏。
+CONFIG_SYS_MAX_NAND_DEVICE	描述有几个NAND FLASH设备。S3C2440上只有一个接口，所以就只有一个设备。
+CONFIG_SYS_NAND_MAX_CHIPS	描述这个NAND FLASH设备上有几个NAND FLASH芯片。TQ2440上只使用了一个NAND FLASH芯片，所以就只有一个芯片。
+CONFIG_SYS_NAND_BASE	描述NAND操作模块的基地址，S3C2440上是0x4e000000起始的。
+CONFIG_SYS_NAND_PAGE_SIZE	描述所使用的NAND FLASH的页大小，TQ2440使用的2K页的芯片
+							（如果不指定，MTD驱动也会自动尝试获取相关的信息，这里只是为开启硬件校验而定义，最好将其归类于硬件校验支持所需要的宏）。
+CONFIG_SYS_NAND_ECCSIZE	这个是表明ECC校验的数据区的大小尺寸
+						（软件校验默认256字节，硬件校验由于S3C2440的这部分功能是针对一个页实现的，
+						所以既然使用2K页的NAND FLASH所以这部分也就和CONFIG_SYS_NAND_PAGE_SIZE相等）。
+CONFIG_SYS_NAND_ECCBYTES	一次校验操作生成校验码的大小，S3C2440的硬件校验是生成4字节（软件校验默认一次3字节，2048字节页会进行8次操作）。
+CONFIG_MTD_NAND_VERIFY_WRITE	在向NAND FLASH写数据的时候开启写校验功能，可以帮助发现写入不成功的情况。
+
+特定配置（针对S3C2440）
+CONFIG_NAND_S3C2440	开启S3C2440的NAND FLASH驱动的总开关。
+CONFIG_S3C24XX_CUSTOM_NAND_TIMING	是否自行配置NAND FLASH的工作时序，驱动默认会配置一个。这里使用自己的配置。
+CONFIG_S3C24XX_TACLS	NAND FLASH的TACLS时序参数。
+CONFIG_S3C24XX_TWRPH0	NAND FLASH的TWRPH0时序参数。
+CONFIG_S3C24XX_TWRPH1	NAND FLASH的TWRPH1时序参数。
+CONFIG_S3C2440_NAND_HWECC	是否开启S3C2440的硬件ECC校验，这里不开启。
+有了配置头文件后，现在就要开始调试NAND FLASH的初始化过程，对相关部分进行修改。
+ */
+
+#define CONFIG_NAND_S3C2440
+#define CONFIG_MTD_DEVICE
+#define	CONFIG_CMD_NAND
+
+#define CONFIG_SYS_MAX_NAND_DEVICE	1
+#define CONFIG_SYS_NAND_MAX_CHIPS	1
+#define CONFIG_SYS_NAND_BASE 	0x4E000000
+
+#define CONFIG_S3C24XX_CUSTOM_NAND_TIMING
+
+#ifdef CONFIG_S3C24XX_CUSTOM_NAND_TIMING
+#define CONFIG_S3C24XX_TACLS 0
+#define CONFIG_S3C24XX_TWRPH0 4
+#define CONFIG_S3C24XX_TWRPH1 2
+#endif
+
+#define CONFIG_SYS_NAND_PAGE_SIZE 2048
+
+#ifdef CONFIG_S3C2440_NAND_HWECC 
+#define CONFIG_SYS_NAND_ECCSIZE CONFIG_SYS_NAND_PAGE_SIZE 
+#define CONFIG_SYS_NAND_ECCBYTES 4 
+#endif 
+
+#define CONFIG_MTD_NAND_VERIFY_WRITE 1
+//#define CONFIG_S3C24XX_CUSTOM_NAND_TIMING
 /*
  * Config for NOR flash
  */
