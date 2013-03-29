@@ -786,6 +786,18 @@ lcname	= $(shell echo $(1) | sed -e 's/\(.*\)_config/\L\1/')
 ucname	= $(shell echo $(1) | sed -e 's/\(.*\)_config/\U\1/')
 
 #########################################################################
+## ARM920T Systems
+#########################################################################
+wuanpin2440_config	:	unconfig
+	@mkdir -p $(obj)include$(obj)board/samsung/wuhanpin2440
+	@mkdir -p $(obj)nand_spl/board/samsung/wuhanpin2440
+	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+	@echo "RAM_TEXT = 0x33000000" >> $(obj)board/samsung/wuhanpin2440/config.tmp
+	@$(MKCONFIG) wuhanpin2440 arm arm920t wuhanpin2440 samsung s3c24x0
+	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
+
+#########################################################################
 ## ARM1176 Systems
 #########################################################################
 smdk6400_noUSB_config	\

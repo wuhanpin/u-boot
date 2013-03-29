@@ -109,13 +109,14 @@ _main:
 #else
 	ldr	sp, =(CONFIG_SYS_INIT_SP_ADDR)
 #endif
+#if ! defined(CONFIG_NAND_SPL)
 	bic	sp, sp, #7	/* 8-byte alignment for ABI compliance */
 	sub	sp, #GD_SIZE	/* allocate one GD above SP */
 	bic	sp, sp, #7	/* 8-byte alignment for ABI compliance */
 	mov	r8, sp		/* GD is above SP */
 	mov	r0, #0
 	bl	board_init_f
-
+#endif
 #if ! defined(CONFIG_SPL_BUILD)
 
 /*
@@ -124,6 +125,7 @@ _main:
  * we'll return 'here' but relocated.
  */
 
+#if ! defined(CONFIG_NAND_SPL)
 	ldr	sp, [r8, #GD_START_ADDR_SP]	/* r8 = gd->start_addr_sp */
 	bic	sp, sp, #7	/* 8-byte alignment for ABI compliance */
 	ldr	r8, [r8, #GD_BD]		/* r8 = gd->bd */
@@ -154,7 +156,7 @@ clbss_l:cmp	r0, r1			/* while not at end of BSS */
 
 	bl coloured_LED_init
 	bl red_led_on
-
+#endif
 #if defined(CONFIG_NAND_SPL)
 
 	/* call _nand_boot() */
