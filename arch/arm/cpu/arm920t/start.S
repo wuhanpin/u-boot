@@ -36,6 +36,7 @@
  *************************************************************************
  */
 
+.globl led_light
 
 .globl _start
 _start:	b	start_code
@@ -172,6 +173,10 @@ copyex:
 	ldr	r0, =CLKDIVN
 	mov	r1, #3
 	str	r1, [r0]
+
+	ldr r2, =0x56000010   @ GPBCON
+	mov r3, #((1<<(5*2)) | (1<<(6*2)) | (1<<(7*2)) | (1<<(8*2)))      @ GPB5_out|GPB6_out|GPB7_out|GPB8_out
+	str r3, [r2]
 #endif	/* CONFIG_S3C24X0 */
 
 	/*
@@ -181,6 +186,8 @@ copyex:
 #ifndef CONFIG_SKIP_LOWLEVEL_INIT
 	bl	cpu_init_crit
 #endif
+	mov r0, #0xff
+	bl led_light
 
 	bl	_main
 

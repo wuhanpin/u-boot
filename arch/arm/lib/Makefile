@@ -37,6 +37,7 @@ GLSOBJS	+= _umodsi3.o
 GLCOBJS	+= div0.o
 
 SOBJS-y += crt0.o
+COBJS-y += led.o
 
 ifndef CONFIG_SPL_BUILD
 COBJS-y	+= board.o
