@@ -97,6 +97,8 @@
 
 _main:
 
+	mov r0, #2
+	bl led_light
 /*
  * Set up initial C runtime environment and call board_init_f(0).
  */
@@ -109,6 +111,8 @@ _main:
 #else
 	ldr	sp, =(CONFIG_SYS_INIT_SP_ADDR)
 #endif
+	mov r0, #3
+	bl led_light
 #if ! defined(CONFIG_NAND_SPL)
 	bic	sp, sp, #7	/* 8-byte alignment for ABI compliance */
 	sub	sp, #GD_SIZE	/* allocate one GD above SP */
@@ -157,16 +161,18 @@ clbss_l:cmp	r0, r1			/* while not at end of BSS */
 	bl coloured_LED_init
 	bl red_led_on
 #endif
+	mov r0, #4
+	bl led_light
 #if defined(CONFIG_NAND_SPL)
 
+	mov r0, #5
+	bl led_light
 	/* call _nand_boot() */
 	ldr     pc, =nand_boot
 
 #else
 
 	/* call board_init_r(gd_t *id, ulong dest_addr) */
-	mov r0, #2
-	bl led_light
 	mov	r0, r8			/* gd_t */
 	ldr	r1, [r8, #GD_RELOCADDR]	/* dest_addr */
 	/* call board_init_r */

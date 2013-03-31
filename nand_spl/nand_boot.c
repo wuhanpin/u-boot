@@ -300,7 +300,7 @@ void nand_boot(void)
 	 * Jump to U-Boot image
 	 */
 	led_light(9);
+	//while(1);
 	uboot = (void *)CONFIG_SYS_NAND_U_BOOT_START;
-	while(1);
 	(*uboot)();
 }

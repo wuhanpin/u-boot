@@ -793,7 +793,7 @@ wuanpin2440_config	:	unconfig
 	@mkdir -p $(obj)nand_spl/board/samsung/wuhanpin2440
 	@echo "#define CONFIG_NAND_U_BOOT" > $(obj)include/config.h
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
-	@echo "RAM_TEXT = 0x31000000" >> $(obj)board/samsung/wuhanpin2440/config.tmp
+	@echo "RAM_TEXT = 0x33000000" >> $(obj)board/samsung/wuhanpin2440/config.tmp
 	@$(MKCONFIG) wuhanpin2440 arm arm920t wuhanpin2440 samsung s3c24x0
 	@echo "CONFIG_NAND_U_BOOT = y" >> $(obj)include/config.mk
 

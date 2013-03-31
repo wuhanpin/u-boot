@@ -182,11 +182,11 @@
 #endif
 
 #define CONFIG_SYS_NAND_BASE 0x4e000000
-#define CONFIG_SYS_NAND_U_BOOT_DST 0x31000000    /*NUB load-addr      */
+#define CONFIG_SYS_NAND_U_BOOT_DST 0x33000000    /*NUB load-addr      */
 #define CONFIG_SYS_NAND_U_BOOT_START CONFIG_SYS_NAND_U_BOOT_DST       /* NUB start addr     */
 
 #define CONFIG_SYS_NAND_U_BOOT_OFFS	(4 * 1024)      /* Offset to RAM U-Boot image */
-#define CONFIG_SYS_NAND_U_BOOT_SIZE	0x80000  /*Size of RAM U-Boot image   */
+#define CONFIG_SYS_NAND_U_BOOT_SIZE	0x40000  /*Size of RAM U-Boot image   */
 
 /* NAND chip page size        */
 #define CONFIG_SYS_NAND_PAGE_SIZE      2048

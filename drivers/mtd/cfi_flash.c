@@ -2332,7 +2332,7 @@ void flash_protect_default(void)
 
 unsigned long flash_init (void)
 {
-	unsigned long size = 0;
+	unsigned long size = 0x200000;
 	int i;
 
 #ifdef CONFIG_SYS_FLASH_PROTECTION
