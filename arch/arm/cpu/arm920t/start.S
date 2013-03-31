@@ -193,7 +193,7 @@ copyex:
 #ifndef CONFIG_SKIP_LOWLEVEL_INIT
 	bl	cpu_init_crit
 #endif
-	mov r0, #0xff
+	mov r0, #1
 	bl led_light
 
 	bl	_main

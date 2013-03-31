@@ -187,10 +187,11 @@ static int nand_read_page(struct mtd_info *mtd, int block, int page, uchar *dst)
 	nand_command(mtd, block, page, 0, NAND_CMD_READ0);
 
 	for (i = 0; eccsteps; eccsteps--, i += eccbytes, p += eccsize) {
-		this->ecc.hwctl(mtd, NAND_ECC_READ);
+	//	this->ecc.hwctl(mtd, NAND_ECC_READ);
 		this->read_buf(mtd, p, eccsize);
-		this->ecc.calculate(mtd, p, &ecc_calc[i]);
+	//	this->ecc.calculate(mtd, p, &ecc_calc[i]);
 	}
+#if 0
 	this->read_buf(mtd, oob_data, CONFIG_SYS_NAND_OOBSIZE);
 
 	/* Pick the ECC bytes out of the oob data */
@@ -207,7 +208,7 @@ static int nand_read_page(struct mtd_info *mtd, int block, int page, uchar *dst)
 		 */
 		this->ecc.correct(mtd, p, &ecc_code[i], &ecc_calc[i]);
 	}
-
+#endif
 	return 0;
 }
 #endif /* #if defined(CONFIG_SYS_NAND_4BIT_HW_ECC_OOBFIRST) */
@@ -252,6 +253,7 @@ static int nand_load(struct mtd_info *mtd, unsigned int offs,
  * configured and available since this code loads the main U-Boot image
  * from NAND into SDRAM and starts it from there.
  */
+extern void led_light(unsigned int);
 void nand_boot(void)
 {
 	struct nand_chip nand_chip;
@@ -261,12 +263,14 @@ void nand_boot(void)
 	/*
 	 * Init board specific nand support
 	 */
+	led_light(5);
 	nand_chip.select_chip = NULL;
 	nand_info.priv = &nand_chip;
 	nand_chip.IO_ADDR_R = nand_chip.IO_ADDR_W = (void  __iomem *)CONFIG_SYS_NAND_BASE;
 	nand_chip.dev_ready = NULL;	/* preset to NULL */
 	nand_chip.options = 0;
 	board_nand_init(&nand_chip);
+	led_light(6);
 
 	if (nand_chip.select_chip)
 		nand_chip.select_chip(&nand_info, 0);
@@ -274,10 +278,12 @@ void nand_boot(void)
 	/*
 	 * Load U-Boot image from NAND into RAM
 	 */
+	led_light(7);
 	nand_load(&nand_info, CONFIG_SYS_NAND_U_BOOT_OFFS, CONFIG_SYS_NAND_U_BOOT_SIZE,
 		  (uchar *)CONFIG_SYS_NAND_U_BOOT_DST);
 
 #ifdef CONFIG_NAND_ENV_DST
+	led_light(8);
 	nand_load(&nand_info, CONFIG_ENV_OFFSET, CONFIG_ENV_SIZE,
 		  (uchar *)CONFIG_NAND_ENV_DST);
 
@@ -293,6 +299,8 @@ void nand_boot(void)
 	/*
 	 * Jump to U-Boot image
 	 */
+	led_light(9);
 	uboot = (void *)CONFIG_SYS_NAND_U_BOOT_START;
+	while(1);
 	(*uboot)();
 }

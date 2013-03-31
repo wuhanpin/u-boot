@@ -165,6 +165,8 @@ clbss_l:cmp	r0, r1			/* while not at end of BSS */
 #else
 
 	/* call board_init_r(gd_t *id, ulong dest_addr) */
+	mov r0, #2
+	bl led_light
 	mov	r0, r8			/* gd_t */
 	ldr	r1, [r8, #GD_RELOCADDR]	/* dest_addr */
 	/* call board_init_r */
