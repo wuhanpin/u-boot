@@ -25,8 +25,8 @@
 static int nand_ecc_pos[] = CONFIG_SYS_NAND_ECCPOS;
 
 #define ECCSTEPS	(CONFIG_SYS_NAND_PAGE_SIZE / \
-					CONFIG_SYS_NAND_ECCSIZE)
-#define ECCTOTAL	(ECCSTEPS * CONFIG_SYS_NAND_ECCBYTES)
+					CONFIG_SYS_NAND_ECCSIZE)	/* ECCSTEPS = 1 */
+#define ECCTOTAL	(ECCSTEPS * CONFIG_SYS_NAND_ECCBYTES)	/* ECCTOTAL = 4 */
 
 
 #if (CONFIG_SYS_NAND_PAGE_SIZE <= 512)
@@ -187,11 +187,11 @@ static int nand_read_page(struct mtd_info *mtd, int block, int page, uchar *dst)
 	nand_command(mtd, block, page, 0, NAND_CMD_READ0);
 
 	for (i = 0; eccsteps; eccsteps--, i += eccbytes, p += eccsize) {
-	//	this->ecc.hwctl(mtd, NAND_ECC_READ);
+		this->ecc.hwctl(mtd, NAND_ECC_READ);
 		this->read_buf(mtd, p, eccsize);
-	//	this->ecc.calculate(mtd, p, &ecc_calc[i]);
+		this->ecc.calculate(mtd, p, &ecc_calc[i]);
 	}
-#if 0
+#if 1
 	this->read_buf(mtd, oob_data, CONFIG_SYS_NAND_OOBSIZE);
 
 	/* Pick the ECC bytes out of the oob data */

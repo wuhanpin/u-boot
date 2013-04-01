@@ -24,12 +24,13 @@
 #include <asm/arch/s3c24x0_cpu.h>
 #include <asm/io.h>
 
-#define S3C2440_NFCONT_EN          (1<<0)
-#define S3C2440_NFCONT_INITECC     (1<<4)
-
 #define S3C2440_NFCONT_SECCLOCK		(1 << 6) 
 #define S3C2440_NFCONT_MECCLOCK		(1 << 5) 
+#define S3C2440_NFCONT_INITECC		(1 << 4)
+
 #define S3C2440_NFCONT_nFCE			(1 << 1) 
+#define S3C2440_NFCONT_EN			(1 << 0)
+
 #define S3C2440_NFCONF_TACLS(x)		((x) << 12) 
 #define S3C2440_NFCONF_TWRPH0(x)	((x) << 8) 
 #define S3C2440_NFCONF_TWRPH1(x)	((x) << 4)
@@ -37,19 +38,8 @@
 #define S3C2440_ADDR_NCLE 0xc 
 #define S3C2440_ADDR_NALE 0x8 
 #define S3C2440_ADDR_DATA 0x10
-/*
-#define S3C2440_NFCONF_512BYTE     (1<<14)
-#define S3C2440_NFCONF_4STEP       (1<<13)
-#define S3C2440_NFCONF_nFCE        (1<<11)
-#define S3C2440_NFCONF_TACLS(x)    ((x)<<8)
-#define S3C2440_NFCONF_TWRPH0(x)   ((x)<<4)
-#define S3C2440_NFCONF_TWRPH1(x)   ((x)<<0)
 
-#define S3C2440_ADDR_NALE 4
-#define S3C2440_ADDR_NCLE 8
-*/
 #ifdef CONFIG_NAND_SPL
-
 /* in the early stage of NAND flash booting, printf() is not available */
 #define printf(fmt, args...)
 void nand_read_buf(struct mtd_info *mtd, u_char *buf, int len)
@@ -74,10 +64,12 @@ static void s3c2440_hwcontrol(struct mtd_info *mtd, int cmd, unsigned int ctrl)
 
 		if (!(ctrl & NAND_CLE))
 			IO_ADDR_W |= S3C2440_ADDR_NCLE;
+
 		if (!(ctrl & NAND_ALE))
 			IO_ADDR_W |= S3C2440_ADDR_NALE;
+
 		if(cmd == NAND_CMD_NONE)
-			IO_ADDR_W = (ulong)nand | S3C2440_ADDR_DATA;	//give data
+			IO_ADDR_W = &nand->nfdata;	//give data
 
 		chip->IO_ADDR_W = (void *)IO_ADDR_W;
 
@@ -105,33 +97,74 @@ void s3c2440_nand_enable_hwecc(struct mtd_info *mtd, int mode)
 {
 	struct s3c2440_nand *nand = s3c2440_get_base_nand();
 	debug("s3c2440_nand_enable_hwecc(%p, %d)\n", mtd, mode);
-	writel(readl(&nand->nfconf) | S3C2440_NFCONT_INITECC, &nand->nfconf);
+	writel(readl(&nand->nfcont) | S3C2440_NFCONT_INITECC, &nand->nfcont);
 }
 
 static int s3c2440_nand_calculate_ecc(struct mtd_info *mtd, const u_char *dat,
 				      u_char *ecc_code)
 {
 	struct s3c2440_nand *nand = s3c2440_get_base_nand();
-	ecc_code[0] = readb(&nand->nfecc);
-	ecc_code[1] = readb(&nand->nfecc + 1);
-	ecc_code[2] = readb(&nand->nfecc + 2);
-	debug("s3c2440_nand_calculate_hwecc(%p,): 0x%02x 0x%02x 0x%02x\n",
-	       mtd , ecc_code[0], ecc_code[1], ecc_code[2]);
+	unsigned int mecc0;
+
+	writel(readl(&nand->nfcont) | S3C2440_NFCONT_MECCLOCK, &nand->nfcont);
+
+	mecc0 = readl(&nand->nfmeccd0);
+	ecc_code[0]= mecc0 & 0xff;
+	ecc_code[1] = (mecc0 >> 8) &0xff;
+	ecc_code[2] = (mecc0 >> 16) &0xff;
+	ecc_code[3] =(mecc0 >> 24) & 0xff;
+
+	debug("s3c2440_nand_calculate_hwecc(%p,): 0x%02x 0x%02x 0x%02x 0x%02x\n",
+	       mtd , ecc_code[0], ecc_code[1], ecc_code[2], ecc_code[3]);
 
 	return 0;
 }
 
-static int s3c2440_nand_correct_data(struct mtd_info *mtd, u_char *dat,
-				     u_char *read_ecc, u_char *calc_ecc)
+static int s3c2440_nand_correct_data(struct mtd_info *mtd,
+			u_char *dat, u_char *read_ecc, u_char *calc_ecc)
 {
-	if (read_ecc[0] == calc_ecc[0] &&
-	    read_ecc[1] == calc_ecc[1] &&
-	    read_ecc[2] == calc_ecc[2])
-		return 0;
+	struct  s3c2440_nand *nand = s3c2440_get_base_nand();
+	u32  meccdata0, meccdata1, estat0, err_byte_addr;
+	int ret = -1;
+	u8  repaired;
 
-	printf("s3c2440_nand_correct_data: not implemented\n");
-	return -1;
+	meccdata0 = (read_ecc[1] << 16) | read_ecc[0];
+	meccdata1 = (read_ecc[3] << 16) | read_ecc[2];
+	writel(meccdata0, &nand->nfmeccd0);
+	writel(meccdata1, &nand->nfmeccd1);
+
+	/*Read ecc status */
+	estat0= readl(&nand->nfestat0);  
+	switch(estat0 & 0x3) {
+		case  0: /* No error */
+			ret= 0;
+			break;
+
+		case  1:
+			/*
+	 		*1 bit error (Correctable)
+	 		*(nfestat0 >> 7) & 0x7ff    :error byte number
+	 		*(nfestat0 >> 4) & 0x7      :error bit number
+			*/
+			err_byte_addr= (estat0 >> 7) & 0x7ff;
+			repaired= dat[err_byte_addr] ^ (1 << ((estat0 >> 4) & 0x7));
+			printf("S3C NAND: 1 bit error detected at byte%ld. " "Correcting from 0x%02x to0x%02x...OK\n",
+						err_byte_addr, dat[err_byte_addr],repaired);
+			dat[err_byte_addr] = repaired;
+			ret= 1;
+			break;
+
+		case  2: /* Multiple error */
+
+		case  3: /* ECC area error */
+			printf("S3C NAND: ECC uncorrectable errordetected. "
+                     "Not correctable.\n");
+			ret= -1;
+				break;
+	}
+	return   ret;
 }
+
 #endif
 
 int board_nand_init(struct nand_chip *nand)
@@ -151,9 +184,9 @@ int board_nand_init(struct nand_chip *nand)
 	twrph0 = CONFIG_S3C24XX_TWRPH0;
 	twrph1 =  CONFIG_S3C24XX_TWRPH1;
 #else
-	tacls = 4;
-	twrph0 = 8;
-	twrph1 = 8;
+	tacls = 2;
+	twrph0 = 3;
+	twrph1 = 1;
 #endif
 
 	//cfg = S3C2440_NFCONF_EN;
@@ -164,6 +197,8 @@ int board_nand_init(struct nand_chip *nand)
 	writel(cfg, &nand_reg->nfconf);
 
 	cfg = 0; 
+	cfg |= S3C2440_NFCONT_SECCLOCK;
+	cfg |= S3C2440_NFCONT_SECCLOCK;
 	cfg |= S3C2440_NFCONT_EN; 
 	cfg |= S3C2440_NFCONT_nFCE; 
 	writel(cfg,&nand_reg->nfcont); 

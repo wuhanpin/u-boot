@@ -199,6 +199,7 @@
 /* Extra address cycle for > 128MiB */
 #define CONFIG_SYS_NAND_5_ADDR_CYCLE
  
+#define CONFIG_S3C2440_NAND_HWECC
 /* Size of the block protected by one OOB(Spare Area in Samsung terminology) */
 #define CONFIG_SYS_NAND_ECCSIZE   CONFIG_SYS_NAND_PAGE_SIZE
 /* Number of ECC bytes per OOB - S3C6400 calculates 4 bytes ECC in 1-bitmode */
