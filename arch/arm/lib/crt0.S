@@ -70,6 +70,8 @@
  * declare nand_boot() or board_init_r() to jump to at end of crt0
  */
 
+.globl led_light
+
 #if defined(CONFIG_NAND_SPL)
 
 .globl nand_boot
