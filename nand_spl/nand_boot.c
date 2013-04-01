@@ -22,11 +22,12 @@
 #include <nand.h>
 #include <asm/io.h>
 
+extern void led_light(unsigned int);
 static int nand_ecc_pos[] = CONFIG_SYS_NAND_ECCPOS;
 
 #define ECCSTEPS	(CONFIG_SYS_NAND_PAGE_SIZE / \
-					CONFIG_SYS_NAND_ECCSIZE)
-#define ECCTOTAL	(ECCSTEPS * CONFIG_SYS_NAND_ECCBYTES)
+					CONFIG_SYS_NAND_ECCSIZE)	/* ECCSTEPS = 1 */
+#define ECCTOTAL	(ECCSTEPS * CONFIG_SYS_NAND_ECCBYTES)	/* ECCTOTAL = 4 */
 
 
 #if (CONFIG_SYS_NAND_PAGE_SIZE <= 512)
@@ -207,7 +208,6 @@ static int nand_read_page(struct mtd_info *mtd, int block, int page, uchar *dst)
 		 */
 		this->ecc.correct(mtd, p, &ecc_code[i], &ecc_calc[i]);
 	}
-
 	return 0;
 }
 #endif /* #if defined(CONFIG_SYS_NAND_4BIT_HW_ECC_OOBFIRST) */
@@ -261,6 +261,7 @@ void nand_boot(void)
 	/*
 	 * Init board specific nand support
 	 */
+	led_light(0x2);
 	nand_chip.select_chip = NULL;
 	nand_info.priv = &nand_chip;
 	nand_chip.IO_ADDR_R = nand_chip.IO_ADDR_W = (void  __iomem *)CONFIG_SYS_NAND_BASE;
@@ -274,10 +275,12 @@ void nand_boot(void)
 	/*
 	 * Load U-Boot image from NAND into RAM
 	 */
+	led_light(0x4);
 	nand_load(&nand_info, CONFIG_SYS_NAND_U_BOOT_OFFS, CONFIG_SYS_NAND_U_BOOT_SIZE,
 		  (uchar *)CONFIG_SYS_NAND_U_BOOT_DST);
 
 #ifdef CONFIG_NAND_ENV_DST
+	led_light(0x8);
 	nand_load(&nand_info, CONFIG_ENV_OFFSET, CONFIG_ENV_SIZE,
 		  (uchar *)CONFIG_NAND_ENV_DST);
 
@@ -293,6 +296,7 @@ void nand_boot(void)
 	/*
 	 * Jump to U-Boot image
 	 */
+	led_light(0x9);
 	uboot = (void *)CONFIG_SYS_NAND_U_BOOT_START;
 	(*uboot)();
 }

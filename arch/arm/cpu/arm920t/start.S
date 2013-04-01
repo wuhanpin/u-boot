@@ -47,7 +47,7 @@ _start:	b	start_code
 	ldr	pc, _not_used
 	ldr	pc, _irq
 	ldr	pc, _fiq
-
+#ifndef CONFIG_NAND_SPL		/* by nand boot */
 _undefined_instruction:	.word undefined_instruction
 _software_interrupt:	.word software_interrupt
 _prefetch_abort:	.word prefetch_abort
@@ -55,7 +55,15 @@ _data_abort:		.word data_abort
 _not_used:		.word not_used
 _irq:			.word irq
 _fiq:			.word fiq
-
+#else
+_undefined_instruction:	.word CONFIG_SYS_NAND_U_BOOT_DST + 0x4
+_software_interrupt:	.word CONFIG_SYS_NAND_U_BOOT_DST +0x8
+_prefetch_abort:	.word CONFIG_SYS_NAND_U_BOOT_DST + 0xc
+_data_abort:		.word CONFIG_SYS_NAND_U_BOOT_DST + 0x10
+_not_used:		.word CONFIG_SYS_NAND_U_BOOT_DST + 0x14
+_irq:			.word CONFIG_SYS_NAND_U_BOOT_DST + 0x18
+_fiq:			.word CONFIG_SYS_NAND_U_BOOT_DST + 0x1c
+#endif		/* end */
 	.balignl 16,0xdeadbeef
 
 
@@ -110,7 +118,6 @@ FIQ_STACK_START:
 .globl IRQ_STACK_START_IN
 IRQ_STACK_START_IN:
 	.word	0x0badc0de
-
 /*
  * the actual start code
  */
@@ -274,7 +281,6 @@ _dynsym_start_ofs:
 c_runtime_cpu_setup:
 
 	mov	pc, lr
-
 /*
  *************************************************************************
  *
@@ -286,12 +292,11 @@ c_runtime_cpu_setup:
  *************************************************************************
  */
 
-
-#ifndef CONFIG_SKIP_LOWLEVEL_INIT
-cpu_init_crit:
 	/*
 	 * flush v4 I/D caches
 	 */
+#ifndef CONFIG_NAND_SPL
+
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c7, 0	/* flush v3/v4 cache */
 	mcr	p15, 0, r0, c8, c7, 0	/* flush v4 TLB */
@@ -306,6 +311,10 @@ cpu_init_crit:
 	orr	r0, r0, #0x00001000	@ set bit 12 (I) I-Cache
 	mcr	p15, 0, r0, c1, c0, 0
 
+#endif
+
+#ifndef CONFIG_SKIP_LOWLEVEL_INIT
+cpu_init_crit:
 	/*
 	 * before relocating, we have to setup RAM timing
 	 * because memory timing is board-dependend, you will
@@ -319,6 +328,7 @@ cpu_init_crit:
 	mov	pc, lr
 #endif /* CONFIG_SKIP_LOWLEVEL_INIT */
 
+#ifndef CONFIG_NAND_SPL
 /*
  *************************************************************************
  *
@@ -480,4 +490,5 @@ fiq:
 	bad_save_user_regs
 	bl	do_fiq
 
+#endif
 #endif
